@@ -130,11 +130,13 @@ app.all('*', (req, res) => {
 app.use(errorHandler);
 
 // Start server
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📚 API Documentation: http://localhost:${PORT}/api`);
   console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
-  
+});
+
   if (process.env.NODE_ENV === 'development') {
     console.log(`🔧 Environment: ${process.env.NODE_ENV}`);
     console.log(`📁 Database URL: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
