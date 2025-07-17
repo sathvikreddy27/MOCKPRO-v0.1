@@ -11,31 +11,29 @@ export const getCategories = asyncHandler(async (req: Request, res: Response) =>
   
   const offset = (page - 1) * limit;
   
-  let query = db.select().from(categories);
-  
-  // Add search filter
+  // Build conditions array
+  const conditions = [];
   if (search) {
-    query = query.where(
-      ilike(categories.name, `%${search}%`)
-    );
+    conditions.push(ilike(categories.name, `%${search}%`));
   }
   
-  // Add sorting
-  const sortColumn = categories[sortBy as keyof typeof categories] || categories.createdAt;
+  // Build the complete query
+  const sortColumn = sortBy === 'name' ? categories.name : 
+                    sortBy === 'slug' ? categories.slug :
+                    categories.createdAt;
   const orderFunction = sortOrder === 'asc' ? asc : desc;
-  query = query.orderBy(orderFunction(sortColumn));
   
-  // Add pagination
-  query = query.limit(limit).offset(offset);
+  const query = db.select().from(categories)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(orderFunction(sortColumn))
+    .limit(limit)
+    .offset(offset);
   
   const result = await query;
   
   // Get total count for pagination
-  const totalQuery = db.select({ count: categories.id }).from(categories);
-  if (search) {
-    totalQuery.where(ilike(categories.name, `%${search}%`));
-  }
-  const totalResult = await totalQuery;
+  const totalResult = await db.select({ count: categories.id }).from(categories)
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
   const total = totalResult.length;
   
   res.json({

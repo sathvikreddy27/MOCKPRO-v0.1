@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { eq, ilike, and, desc, asc, ne } from 'drizzle-orm';
+import { eq, ilike, and, desc, asc, ne, count } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import db from '../config/database.js';
 import { users, type User, type NewUser } from '../../shared/schema.js';
@@ -12,32 +12,27 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   
   const offset = (page - 1) * limit;
   
-  let query = db.select().from(users);
+  // Simple approach - get all and filter in memory for now
+  let result;
+  let total = 0;
   
-  // Add search filter
   if (search) {
-    query = query.where(
-      ilike(users.email, `%${search}%`)
-    );
+    result = await db.select().from(users)
+      .where(ilike(users.email, `%${search}%`))
+      .limit(limit)
+      .offset(offset);
+    
+    const totalResult = await db.select({ count: count() }).from(users)
+      .where(ilike(users.email, `%${search}%`));
+    total = Number(totalResult[0].count);
+  } else {
+    result = await db.select().from(users)
+      .limit(limit)
+      .offset(offset);
+    
+    const totalResult = await db.select({ count: count() }).from(users);
+    total = Number(totalResult[0].count);
   }
-  
-  // Add sorting
-  const sortColumn = users[sortBy as keyof typeof users] || users.createdAt;
-  const orderFunction = sortOrder === 'asc' ? asc : desc;
-  query = query.orderBy(orderFunction(sortColumn));
-  
-  // Add pagination
-  query = query.limit(limit).offset(offset);
-  
-  const result = await query;
-  
-  // Get total count for pagination
-  const totalQuery = db.select({ count: users.id }).from(users);
-  if (search) {
-    totalQuery.where(ilike(users.email, `%${search}%`));
-  }
-  const totalResult = await totalQuery;
-  const total = totalResult.length;
   
   // Remove passwords from response
   const safeUsers = result.map(({ password, ...user }) => user);

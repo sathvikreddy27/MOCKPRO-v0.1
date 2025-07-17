@@ -51,7 +51,7 @@ export const comments = pgTable('comments', {
   content: text('content').notNull(),
   authorId: integer('author_id').references(() => users.id).notNull(),
   postId: integer('post_id').references(() => posts.id).notNull(),
-  parentId: integer('parent_id').references(() => comments.id), // for nested comments
+  parentId: integer('parent_id'), // self-reference for nested comments
   isApproved: boolean('is_approved').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
