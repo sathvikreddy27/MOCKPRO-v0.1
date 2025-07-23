@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package example.v1;
+
+// Example service for demonstrating buf configuration
+service ExampleService {
+  // Get a greeting message
+  rpc GetGreeting(GetGreetingRequest) returns (GetGreetingResponse);
+
+  // List users
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+}
+
+// Request message for GetGreeting
+message GetGreetingRequest {
+  string name = 1;
+}
+
+// Response message for GetGreeting
+message GetGreetingResponse {
+  string message = 1;
+  int64 timestamp = 2;
+}
+
+// Request message for ListUsers
+message ListUsersRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+// Response message for ListUsers
+message ListUsersResponse {
+  repeated User users = 1;
+  string next_page_token = 2;
+}
+
+// User message
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  int64 created_at = 4;
+}
